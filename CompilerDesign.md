@@ -1,5 +1,4 @@
-🧩 Concise takeaway
-A full, production‑grade Foresette compiler is 55,000–140,000 LOC.  
+🧩 A full, production‑grade Foresette compiler is 55,000–140,000 LOC.  
 A minimal, working LLVM-backed compiler is 20,000–40,000 LOC.  
 A self-hosting Foresette compiler stabilizes around 70,000–120,000 LOC.
 
