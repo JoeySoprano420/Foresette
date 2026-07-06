@@ -1,0 +1,830 @@
+```text
+program ForesetteCompleteDemo
+
+import engine.math
+import engine.io
+import engine.time
+
+external puts
+native c
+
+export main
+
+error InvalidSetting
+    slot reason
+end
+
+error ResourceMissing
+    slot reason
+end
+
+error ResourceFailed
+    slot reason
+end
+
+error SceneMissing
+    slot reason
+end
+
+error InputInvalid
+    slot reason
+end
+
+error PlayerDefeated
+    slot reason
+end
+
+error SaveCorrupt
+    slot reason
+end
+
+error ReplayEnded
+    slot reason
+end
+
+error EngineShutdown
+    slot reason
+end
+
+entry main
+    memory settings dedicated
+    memory resources dedicated
+    memory scene dedicated
+    memory input dedicated
+    memory player dedicated
+    memory enemy dedicated
+    memory battle dedicated
+    memory replay dedicated
+    memory save dedicated
+    memory engine dedicated
+
+    slot volume from settings assign 70
+    slot brightness from settings assign 55
+    slot difficulty from settings assign "normal"
+
+    slot selected_volume from settings assign 85
+    slot selected_brightness from settings assign 60
+    slot selected_difficulty from settings assign "hard"
+
+    slot valid_difficulties from settings assign [
+        "easy",
+        "normal",
+        "hard"
+    ]
+
+    slot applying_settings from settings assign false
+
+    slot resource_names from resources assign [
+        "player.png",
+        "enemy.png",
+        "theme.wav"
+    ]
+
+    slot resource_states from resources assign [
+        "waiting",
+        "waiting",
+        "waiting"
+    ]
+
+    slot loaded_count from resources assign 0
+    slot loading_resources from resources assign true
+
+    slot current_scene from scene assign "forest"
+    slot next_scene from scene assign "arena"
+
+    slot scene_names from scene assign [
+        "forest",
+        "arena",
+        "castle"
+    ]
+
+    slot scene_loaded from scene assign [
+        true,
+        false,
+        false
+    ]
+
+    slot transition_active from scene assign false
+
+    slot keys from input assign [
+        "left",
+        "right",
+        "attack"
+    ]
+
+    slot key_states from input assign [
+        "up",
+        "pressed",
+        "up"
+    ]
+
+    slot input_active from input assign true
+
+    slot player_health from player assign 100
+    slot player_attack from player assign 18
+    slot player_defense from player assign 5
+    slot player_position from player assign 2
+
+    slot enemy_health from enemy assign 80
+    slot enemy_attack from enemy assign 14
+    slot enemy_defense from enemy assign 3
+    slot enemy_position from enemy assign 5
+
+    slot round from battle assign 1
+    slot running from battle assign true
+    slot hazards from battle assign [2, 4, 6]
+
+    slot replay_frames from replay assign [0, 0, 0, 0, 0]
+    slot current_frame from replay assign 0
+    slot recording from replay assign true
+    slot playback from replay assign false
+
+    slot save_slots from save assign [0, 1, 2]
+    slot selected_save from save assign 0
+    slot saved_health from save assign 0
+    slot saved_position from save assign 0
+
+    slot frame_count from engine assign 0
+    slot engine_active from engine assign true
+
+    permit read volume
+    permit change volume
+
+    permit read brightness
+    permit change brightness
+
+    permit read difficulty
+    permit change difficulty
+
+    permit read selected_volume
+    permit change selected_volume
+
+    permit read selected_brightness
+    permit change selected_brightness
+
+    permit read selected_difficulty
+    permit change selected_difficulty
+
+    permit read valid_difficulties
+
+    permit read applying_settings
+    permit change applying_settings
+
+    permit read resource_names
+
+    permit read resource_states
+    permit change resource_states
+    permit share resource_states
+
+    permit read loaded_count
+    permit change loaded_count
+    permit share loaded_count
+
+    permit read loading_resources
+    permit change loading_resources
+
+    permit read current_scene
+    permit change current_scene
+    permit share current_scene
+
+    permit read next_scene
+    permit change next_scene
+    permit share next_scene
+
+    permit read scene_names
+
+    permit read scene_loaded
+    permit change scene_loaded
+    permit share scene_loaded
+
+    permit read transition_active
+    permit change transition_active
+    permit share transition_active
+
+    permit read keys
+    permit read key_states
+    permit change key_states
+    permit share key_states
+
+    permit read input_active
+    permit change input_active
+
+    permit read player_health
+    permit change player_health
+    permit share player_health
+
+    permit read player_attack
+    permit read player_defense
+
+    permit read player_position
+    permit change player_position
+    permit share player_position
+
+    permit read enemy_health
+    permit change enemy_health
+
+    permit read enemy_attack
+    permit read enemy_defense
+
+    permit read enemy_position
+    permit change enemy_position
+
+    permit read round
+    permit change round
+    permit share round
+
+    permit read running
+    permit change running
+    permit share running
+
+    permit read hazards
+
+    permit read replay_frames
+    permit change replay_frames
+    permit share replay_frames
+
+    permit read current_frame
+    permit change current_frame
+    permit share current_frame
+
+    permit read recording
+    permit change recording
+
+    permit read playback
+    permit change playback
+
+    permit read save_slots
+
+    permit read selected_save
+    permit change selected_save
+
+    permit read saved_health
+    permit change saved_health
+    permit share saved_health
+
+    permit read saved_position
+    permit change saved_position
+    permit share saved_position
+
+    permit read frame_count
+    permit change frame_count
+
+    permit read engine_active
+    permit change engine_active
+
+    route edit to validate
+    route validate to apply
+    route discover to load
+    route load to finalize
+    route current to unload
+    route unload to transition
+    route transition to active
+    route record to playback
+    route save to shutdown
+
+    slot difficulty_found assign false
+
+    permit read difficulty_found
+    permit change difficulty_found
+
+    each option from valid_difficulties
+        if selected_difficulty == option
+            difficulty_found assign true
+        end
+    end
+
+    parallel
+        if selected_volume < 0
+            handle InvalidSetting
+                slot reason assign "Volume below zero."
+                delegate reason to puts
+                stop
+            end
+        end
+
+        if selected_volume > 100
+            handle InvalidSetting
+                slot reason assign "Volume above maximum."
+                delegate reason to puts
+                stop
+            end
+        end
+
+        if selected_brightness < 0
+            handle InvalidSetting
+                slot reason assign "Brightness below zero."
+                delegate reason to puts
+                stop
+            end
+        end
+
+        if selected_brightness > 100
+            handle InvalidSetting
+                slot reason assign "Brightness above maximum."
+                delegate reason to puts
+                stop
+            end
+        end
+    end
+
+    if difficulty_found == false
+        handle InvalidSetting
+            slot reason assign "Difficulty is invalid."
+            delegate reason to puts
+            stop
+        end
+    end
+
+    applying_settings assign true
+
+    when applying_settings
+        volume assign selected_volume
+        brightness assign selected_brightness
+        difficulty assign selected_difficulty
+
+        slot reason assign "Settings applied."
+        delegate reason to puts
+
+        applying_settings assign false
+    end
+
+    parallel
+        if resource_names[0] == ""
+            handle ResourceMissing
+                slot reason assign "Resource 0 missing."
+                delegate reason to puts
+                stop
+            end
+        end
+
+        if resource_names[1] == ""
+            handle ResourceMissing
+                slot reason assign "Resource 1 missing."
+                delegate reason to puts
+                stop
+            end
+        end
+
+        if resource_names[2] == ""
+            handle ResourceMissing
+                slot reason assign "Resource 2 missing."
+                delegate reason to puts
+                stop
+            end
+        end
+    end
+
+    concurrent
+        path texture_loader
+            resource_states[0] assign "loading"
+            resource_states[0] assign "loaded"
+
+            lock loaded_count
+            loaded_count assign loaded_count + 1
+            unlock loaded_count
+
+            signal texture_ready
+        end
+
+        path enemy_texture_loader
+            resource_states[1] assign "loading"
+            resource_states[1] assign "loaded"
+
+            lock loaded_count
+            loaded_count assign loaded_count + 1
+            unlock loaded_count
+
+            signal enemy_texture_ready
+        end
+
+        path audio_loader
+            resource_states[2] assign "loading"
+            resource_states[2] assign "loaded"
+
+            lock loaded_count
+            loaded_count assign loaded_count + 1
+            unlock loaded_count
+
+            signal audio_ready
+        end
+
+        path finalize_loader
+            wait texture_ready
+            wait enemy_texture_ready
+            wait audio_ready
+
+            if loaded_count == 3
+                signal all_resources_ready
+                loading_resources assign false
+            else
+                handle ResourceFailed
+                    slot reason assign "Resource count mismatch."
+                    delegate reason to puts
+                    stop
+                end
+            end
+        end
+    end
+
+    wait all_resources_ready
+
+    slot current_index assign 0
+    slot next_index assign 0
+    slot current_found assign false
+    slot next_found assign false
+
+    permit read current_index
+    permit change current_index
+
+    permit read next_index
+    permit change next_index
+
+    permit read current_found
+    permit change current_found
+
+    permit read next_found
+    permit change next_found
+
+    for i from 0 to 3
+        if scene_names[i] == current_scene
+            current_found assign true
+            current_index assign i
+        end
+
+        if scene_names[i] == next_scene
+            next_found assign true
+            next_index assign i
+        end
+    end
+
+    if current_found == false
+        handle SceneMissing
+            slot reason assign "Current scene missing."
+            delegate reason to puts
+            stop
+        end
+    end
+
+    if next_found == false
+        handle SceneMissing
+            slot reason assign "Next scene missing."
+            delegate reason to puts
+            stop
+        end
+    end
+
+    if current_scene != next_scene
+        transition_active assign true
+
+        concurrent
+            path unload_old_scene
+                lock scene_loaded
+                scene_loaded[current_index] assign false
+                unlock scene_loaded
+
+                signal old_scene_unloaded
+            end
+
+            path load_new_scene
+                lock scene_loaded
+                scene_loaded[next_index] assign true
+                unlock scene_loaded
+
+                signal new_scene_loaded
+            end
+
+            path commit_scene
+                wait old_scene_unloaded
+                wait new_scene_loaded
+
+                lock current_scene
+                current_scene assign next_scene
+                unlock current_scene
+
+                signal transition_ready
+            end
+        end
+
+        wait transition_ready
+
+        transition_active assign false
+    else
+        bypass
+    end
+
+    parallel
+        if keys[0] == ""
+            handle InputInvalid
+                slot reason assign "Input key 0 missing."
+                delegate reason to puts
+                stop
+            end
+        end
+
+        if keys[1] == ""
+            handle InputInvalid
+                slot reason assign "Input key 1 missing."
+                delegate reason to puts
+                stop
+            end
+        end
+
+        if keys[2] == ""
+            handle InputInvalid
+                slot reason assign "Input key 2 missing."
+                delegate reason to puts
+                stop
+            end
+        end
+    end
+
+    concurrent
+        path keyboard
+            wait keyboard_ready
+
+            lock key_states
+            key_states[1] assign "pressed"
+            unlock key_states
+
+            signal input_ready
+        end
+
+        path controller
+            wait controller_ready
+
+            lock key_states
+            key_states[2] assign "pressed"
+            unlock key_states
+
+            signal controller_input_ready
+        end
+    end
+
+    repeat 1
+        signal keyboard_ready
+        signal controller_ready
+    end
+
+    while engine_active
+        frame_count assign frame_count + 1
+
+        if recording
+            if current_frame < 5
+                replay_frames[current_frame] assign player_position
+                current_frame assign current_frame + 1
+            else
+                recording assign false
+                playback assign true
+                current_frame assign 0
+            end
+        end
+
+        concurrent
+            path input_path
+                wait input_ready
+
+                lock player_position
+                if key_states[1] == "pressed"
+                    player_position assign player_position + 1
+                else
+                    bypass
+                end
+                unlock player_position
+            end
+
+            path controller_path
+                wait controller_input_ready
+
+                lock player_position
+                if key_states[2] == "pressed"
+                    player_position assign player_position + 1
+                else
+                    bypass
+                end
+                unlock player_position
+            end
+
+            path announcer
+                delegate round with read to announce_round
+            end
+        end
+
+        slot player_target assign enemy_position
+        slot enemy_target assign player_position
+
+        parallel
+            if player_position < player_target
+                player_position assign player_position + 1
+            else
+                player_position assign player_position - 1
+            end
+
+            if enemy_position < enemy_target
+                enemy_position assign enemy_position + 1
+            else
+                enemy_position assign enemy_position - 1
+            end
+        end
+
+        each hazard from hazards
+            if player_position == hazard
+                player_health assign player_health - 10
+            end
+
+            if enemy_position == hazard
+                enemy_health assign enemy_health - 10
+            end
+        end
+
+        slot distance assign enemy_position - player_position
+
+        permit read distance
+        permit change distance
+
+        if distance < 0
+            distance assign distance * -1
+        end
+
+        slot player_damage assign player_attack - enemy_defense
+        slot enemy_damage assign enemy_attack - player_defense
+
+        permit read player_damage
+        permit change player_damage
+
+        permit read enemy_damage
+        permit change enemy_damage
+
+        parallel
+            if player_damage < 0
+                player_damage assign 0
+            end
+
+            if enemy_damage < 0
+                enemy_damage assign 0
+            end
+        end
+
+        if distance <= 1
+            enemy_health assign enemy_health - player_damage
+            player_health assign player_health - enemy_damage
+        else
+            bypass
+        end
+
+        match difficulty
+            case "easy"
+                if player_health < 100
+                    player_health assign player_health + 1
+                end
+
+            case "normal"
+                bypass
+
+            case "hard"
+                if enemy_health > 0
+                    player_health assign player_health - 1
+                end
+
+            else
+                handle InvalidSetting
+                    slot reason assign "Unknown difficulty during combat."
+                    delegate reason to puts
+                    stop
+                end
+        end
+
+        if enemy_health <= 0
+            handle PlayerDefeated
+                slot reason assign "Enemy defeated. Player wins."
+                delegate reason to puts
+                running assign false
+                engine_active assign false
+            end
+        else
+            if player_health <= 0
+                handle PlayerDefeated
+                    slot reason assign "Player defeated."
+                    delegate reason to puts
+                    running assign false
+                    engine_active assign false
+                end
+            end
+        end
+
+        round assign round + 1
+
+        if round > 10
+            running assign false
+            engine_active assign false
+        end
+
+        if frame_count >= 60
+            engine_active assign false
+        end
+    end
+
+    if playback
+        while playback
+            if current_frame < 5
+                slot replay_position assign replay_frames[current_frame]
+
+                permit read replay_position
+
+                delegate replay_position with read to draw_replay
+
+                current_frame assign current_frame + 1
+            else
+                handle ReplayEnded
+                    slot reason assign "Replay finished."
+                    delegate reason to puts
+                    playback assign false
+                end
+            end
+        end
+    else
+        bypass
+    end
+
+    slot save_found assign false
+
+    permit read save_found
+    permit change save_found
+
+    each save_id from save_slots
+        if selected_save == save_id
+            save_found assign true
+        end
+    end
+
+    if save_found == false
+        handle SaveCorrupt
+            slot reason assign "Selected save slot is invalid."
+            delegate reason to puts
+            stop
+        end
+    end
+
+    concurrent
+        path autosave
+            lock player_health
+            lock player_position
+
+            saved_health assign player_health
+            saved_position assign player_position
+
+            unlock player_position
+            unlock player_health
+
+            signal save_done
+        end
+
+        path save_validator
+            wait save_done
+
+            parallel
+                if saved_health < 0
+                    handle SaveCorrupt
+                        slot reason assign "Saved health is corrupt."
+                        delegate reason to puts
+                        stop
+                    end
+                end
+
+                if saved_position < 0
+                    handle SaveCorrupt
+                        slot reason assign "Saved position is corrupt."
+                        delegate reason to puts
+                        stop
+                    end
+                end
+            end
+
+            signal save_valid
+        end
+    end
+
+    wait save_valid
+
+    attempt shutdown_engine
+
+    handle EngineShutdown
+        slot reason assign "Engine shutdown complete."
+        delegate reason to puts
+        stop
+    end
+
+    return 0
+end
+
+entry announce_round
+    slot message assign "Round update."
+    delegate message to puts
+    return 0
+end
+
+entry draw_replay
+    slot message assign "Drawing replay frame."
+    delegate message to puts
+    return 0
+end
+```
