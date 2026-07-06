@@ -1,0 +1,65 @@
+foresette/
+│
+├── CMakeLists.txt
+├── README.md
+│
+├── src/
+│   ├── lexer/
+│   │   ├── Token.hpp
+│   │   ├── Token.cpp
+│   │   ├── Lexer.hpp
+│   │   └── Lexer.cpp
+│   │
+│   ├── parser/
+│   │   ├── Parser.hpp
+│   │   └── Parser.cpp
+│   │
+│   ├── ast/
+│   │   ├── AST.hpp
+│   │   ├── Nodes.hpp
+│   │   └── ASTPrinter.cpp
+│   │
+│   ├── sem/
+│   │   ├── SemanticGraph.hpp
+│   │   ├── SemanticGraph.cpp
+│   │   ├── Tables.hpp
+│   │   ├── Tables.cpp
+│   │   ├── Verifier.hpp
+│   │   └── Verifier.cpp
+│   │
+│   ├── llvm/
+│   │   ├── Lowering.hpp
+│   │   ├── Lowering.cpp
+│   │   ├── Metadata.hpp
+│   │   └── Metadata.cpp
+│   │
+│   ├── runtime/
+│   │   ├── Threads.hpp
+│   │   ├── Threads.cpp
+│   │   ├── Sync.hpp
+│   │   └── Sync.cpp
+│   │
+│   ├── diag/
+│   │   ├── Diagnostics.hpp
+│   │   └── Diagnostics.cpp
+│   │
+│   ├── driver/
+│   │   ├── ForesetteDriver.hpp
+│   │   ├── ForesetteDriver.cpp
+│   │   └── main.cpp
+│
+├── include/
+│   └── foresette/ (public headers)
+│
+├── tests/
+│   ├── lexer/
+│   ├── parser/
+│   ├── sem/
+│   ├── llvm/
+│   └── driver/
+│
+└── examples/
+    ├── hello.4se
+    ├── memory.4se
+    ├── parallel.4se
+    └── engine.4se
