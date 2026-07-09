@@ -133,7 +133,8 @@ continue
 import
 export
 external
-nativefull 
+native
+full 
 expression 
 grammar
 
