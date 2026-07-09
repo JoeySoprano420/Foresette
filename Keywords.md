@@ -70,4 +70,24 @@ Boundaries
 - import  
 - export  
 - external  
-- native  
+- native
+
+
+## --- ##
+
+
+
+🧩 Permission‑Based SafetyAuthority vocabulary:readchangemoveshareexposeenterleave
+
+Authority vocabulary:readchangemoveshareexposeenterleave
+
+## --- ####
+
+
+
+🧩 Grammar (Complete)Your documents provide the full grammar for:program structureslotsmemorypermissionsdelegationerrorsroutesparallelconcurrentsync/wait/signal/lock/unlockif/else/when/match/caserepeat/while/for/eachreturn/stop/bypass/break/continueimport/export/external/nativefull expression grammar
+
+
+
+## --- ##
+
