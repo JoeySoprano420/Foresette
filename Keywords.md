@@ -77,15 +77,65 @@ Boundaries
 
 
 
-🧩 Permission‑Based SafetyAuthority vocabulary:readchangemoveshareexposeenterleave
+🧩 Permission‑Based SafetyAuthority vocabulary:
+read
+change
+move
+share
+expose
+enter
+leave
 
-Authority vocabulary:readchangemoveshareexposeenterleave
+Authority vocabulary:
+read
+change
+move
+share
+expose
+enter
+leave
 
 ## --- ####
 
 
 
-🧩 Grammar (Complete)Your documents provide the full grammar for:program structureslotsmemorypermissionsdelegationerrorsroutesparallelconcurrentsync/wait/signal/lock/unlockif/else/when/match/caserepeat/while/for/eachreturn/stop/bypass/break/continueimport/export/external/nativefull expression grammar
+🧩 Grammar (Complete)Your documents provide the full grammar for:
+
+program 
+structure
+slots
+memory
+permissions
+delegation
+errors
+routes
+parallel
+concurrent
+sync
+wait
+signal
+lock
+unlock
+if
+else
+when
+match
+case
+repeat
+while
+for
+each
+return
+stop
+bypass
+break
+continue
+import
+export
+external
+nativefull 
+expression 
+grammar
 
 
 
